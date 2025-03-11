@@ -1,0 +1,53 @@
+name: Reusable Workflow – Create PR from Dev to Main
+
+on:
+  workflow_call:
+    inputs:
+      destination_repo:
+        description: 'Target repository (Test) as owner/repo'
+        required: true
+        type: string
+      base_branch:
+        description: 'Base branch in target repo'
+        required: true
+        type: string
+      head_branch:
+        description: 'Branch from which to create the PR (in Test-dev)'
+        required: true
+        type: string
+      token:
+        description: 'PAT with PR creation rights in the target repository'
+        required: true
+        type: string
+      pr_title:
+        description: 'Title for the pull request'
+        required: true
+        type: string
+      pr_body:
+        description: 'Body text for the pull request'
+        required: false
+        type: string
+
+jobs:
+  create_pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current repository (Test-dev)
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.head_branch }}
+          fetch-depth: 0
+
+      - name: Set up GitHub CLI
+        uses: cli/gh-action@v2
+        with:
+          token: ${{ inputs.token }}
+
+      - name: Create Pull Request in Test
+        run: |
+          gh pr create \
+            --repo ${{ inputs.destination_repo }} \
+            --base ${{ inputs.base_branch }} \
+            --head ${{ inputs.head_branch }} \
+            --title "${{ inputs.pr_title }}" \
+            --body "${{ inputs.pr_body }}"

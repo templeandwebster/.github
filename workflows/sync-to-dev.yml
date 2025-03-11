@@ -1,0 +1,44 @@
+name: Reusable Workflow – Sync Main to Dev
+
+on:
+  workflow_call:
+    inputs:
+      source_branch:
+        description: 'Source branch name in the Test repo'
+        required: true
+        type: string
+      destination_repo:
+        description: 'Destination repository in owner/repo format (Test-dev)'
+        required: true
+        type: string
+      destination_branch:
+        description: 'Destination branch in the target repository'
+        required: true
+        type: string
+      token:
+        description: 'PAT with push rights to the destination repository'
+        required: true
+        type: string
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.source_branch }}
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+
+      - name: Add destination remote
+        run: |
+          git remote add destination https://x-access-token:${{ inputs.token }}@github.com/${{ inputs.destination_repo }}.git
+
+      - name: Force push changes to destination branch
+        run: |
+          git push destination ${{ inputs.source_branch }}:${{ inputs.destination_branch }} --force
